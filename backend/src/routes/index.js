@@ -8,24 +8,23 @@
 
 const { Router } = require("express");
 
-// Los módulos se irán habilitando conforme se implementen
 const authRoutes = require("../modules/auth/auth.routes");
 const fincasRoutes = require("../modules/fincas/fincas.routes");
 const animalesRoutes = require("../modules/animales/animales.routes");
-// const vacunasRoutes   = require('../modules/vacunas/vacunas.routes');
-// const partosRoutes    = require('../modules/partos/partos.routes');
-// const gastosRoutes    = require('../modules/gastos/gastos.routes');
-// const comunidadRoutes = require('../modules/comunidad/comunidad.routes');
+const vacunasRoutes   = require('../modules/vacunas/vacunas.routes');
+const partosRoutes    = require('../modules/partos/partos.routes');
+const gastosRoutes    = require('../modules/gastos/gastos.routes');
+const comunidadRoutes = require('../modules/comunidad/comunidad.routes');
 
 const router = Router();
 
 router.use("/auth", authRoutes);
 router.use("/fincas", fincasRoutes);
 router.use("/animales", animalesRoutes);
-// router.use('/vacunas',   vacunasRoutes);
-// router.use('/partos',    partosRoutes);
-// router.use('/gastos',    gastosRoutes);
-// router.use('/comunidad', comunidadRoutes);
+router.use('/vacunas',   vacunasRoutes);
+router.use('/partos',    partosRoutes);
+router.use('/gastos',    gastosRoutes);
+router.use('/comunidad', comunidadRoutes);
 
 // Ruta de referencia de la API
 router.get("/", (req, res) => {

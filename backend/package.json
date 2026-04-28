@@ -3,12 +3,12 @@
   "version": "1.0.0",
   "main": "src/server.js",
   "scripts": {
-    "start":      "node src/server.js",
-    "dev":        "nodemon src/server.js",
-    "test":       "jest --detectOpenHandles",
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "test": "jest --detectOpenHandles",
     "test:watch": "jest --watch",
-    "lint":       "eslint src/",
-    "format":     "prettier --write src/"
+    "lint": "eslint src/",
+    "format": "prettier --write src/"
   },
   "keywords": [],
   "author": "",
@@ -27,6 +27,7 @@
     "morgan": "^1.10.1",
     "multer": "^2.1.1",
     "node-cron": "^4.2.1",
+    "nodemailer": "^8.0.7",
     "pg": "^8.20.0",
     "uuid": "^14.0.0",
     "winston": "^3.19.0",
