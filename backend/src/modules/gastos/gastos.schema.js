@@ -1,6 +1,3 @@
-/**
- * modules/gastos/gastos.schema.js
- */
 'use strict';
 
 const { z } = require('zod');
@@ -12,7 +9,7 @@ const crearGastoSchema = z.object({
     tipo: z.enum(TIPOS_MOVIMIENTO).default('Gasto'),
     categoria: z.enum(CATEGORIAS_GASTO),
     descripcion: z.string().max(500).optional(),
-    monto: z.number().positive('El monto debe ser mayor a 0'),
+    monto: z.coerce.number().positive('El monto debe ser mayor a 0'),
     fecha: z.string().date('Formato inválido (YYYY-MM-DD)'),
     proveedor: z.string().max(200).optional(),
     factura: z.string().max(100).optional(),

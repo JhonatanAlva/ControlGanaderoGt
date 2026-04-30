@@ -1,13 +1,15 @@
 # docker-compose.yml
 services:
+
+  # ── Base de datos ──────────────────────────────────────────────────────────
   postgres:
     image: postgres:16
     container_name: controlganado_postgres
     restart: always
     environment:
-      POSTGRES_USER: ${DB_USER}
+      POSTGRES_USER:     ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_DB:       ${DB_NAME}
     ports:
       - "${DB_PORT:-5432}:5432"
     volumes:
@@ -21,12 +23,13 @@ services:
       timeout: 5s
       retries: 5
 
+  # ── pgAdmin ────────────────────────────────────────────────────────────────
   pgadmin:
     image: dpage/pgadmin4
     container_name: controlganado_pgadmin
     restart: always
     environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_EMAIL:    ${PGADMIN_EMAIL}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
     ports:
       - "5050:80"
@@ -35,6 +38,55 @@ services:
         condition: service_healthy
     networks:
       - controlganado_net
+
+  # ── Backend Node.js ────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: controlganado_backend
+    restart: always
+    environment:
+      NODE_ENV:              production
+      PORT:                  3000
+      DB_HOST:               postgres
+      DB_PORT:               5432
+      DB_USER:               ${DB_USER}
+      DB_PASSWORD:           ${DB_PASSWORD}
+      DB_NAME:               ${DB_NAME}
+      JWT_SECRET:            ${JWT_SECRET}
+      JWT_EXPIRES_IN:        ${JWT_EXPIRES_IN:-7d}
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
+      CLOUDINARY_API_KEY:    ${CLOUDINARY_API_KEY}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - controlganado_net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 15s
+      retries: 3
+
+  # ── Frontend — descomentar cuando esté listo ───────────────────────────────
+  # frontend:
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile
+  #   container_name: controlganado_frontend
+  #   restart: always
+  #   ports:
+  #     - "8081:8081"
+  #   depends_on:
+  #     backend:
+  #       condition: service_healthy
+  #   networks:
+  #     - controlganado_net
 
 volumes:
   postgres_data:

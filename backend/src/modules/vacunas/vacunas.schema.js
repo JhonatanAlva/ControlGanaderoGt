@@ -1,6 +1,3 @@
-/**
- * modules/vacunas/vacunas.schema.js
- */
 'use strict';
 
 const { z } = require('zod');
@@ -17,7 +14,7 @@ const registrarVacunaSchema = z.object({
     dosis: z.string().max(50).optional(),
     via_aplicacion: z.enum(VIAS_APLICACION).optional(),
     veterinario: z.string().max(150).optional(),
-    costo: z.number().positive().optional(),
+    costo: z.coerce.number().positive().optional(),
     notas: z.string().optional(),
 });
 
@@ -27,7 +24,7 @@ const filtrosVacunaSchema = z.object({
     animal_id: z.string().uuid().optional(),
     finca_id: z.string().uuid().optional(),
     tipo_vacuna: z.enum(TIPOS_VACUNA).optional(),
-    pendientes: z.enum(['true', 'false']).optional(), // solo proxima_dosis próximas
+    pendientes: z.enum(['true', 'false']).optional(),
     page: z.string().optional(),
     limit: z.string().optional(),
 }).optional();

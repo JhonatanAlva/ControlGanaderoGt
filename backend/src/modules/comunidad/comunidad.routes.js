@@ -9,6 +9,7 @@
  * DELETE /api/v1/comunidad/:id       → eliminar (solo el autor)
  * POST   /api/v1/comunidad/:id/like  → toggle like (requiere auth)
  */
+
 'use strict';
 
 const { Router } = require('express');
@@ -22,7 +23,7 @@ const {
     filtrosPostSchema,
 } = require('./comunidad.schema');
 
-// Middleware de auth opcional — adjunta req.user si hay token válido, pero no bloquea
+// Auth opcional — adjunta req.user si hay token, pero no bloquea
 const authOpcional = async (req, res, next) => {
     try {
         const authHeader = req.headers.authorization;
@@ -32,20 +33,22 @@ const authOpcional = async (req, res, next) => {
             req.user = decoded;
         }
     } catch {
-        // Token inválido o expirado — se ignora silenciosamente
+        // Token inválido — se ignora
     }
     next();
 };
 
 const router = Router();
 
-// Rutas públicas (auth opcional para mostrar yo_di_like)
-router.get('/', authOpcional, validate(filtrosPostSchema, 'query'), controller.listar);
-router.get('/:id', authOpcional, controller.obtener);
-
-// Rutas privadas
+// ── Rutas estáticas PRIMERO (antes de /:id) ──────────────────────────────────
 router.get('/mis-posts', auth, controller.misPosts);
+
+// ── Rutas públicas ───────────────────────────────────────────────────────────
+router.get('/', authOpcional, validate(filtrosPostSchema, 'query'), controller.listar);
 router.post('/', auth, uploadFotoPost, validate(crearPostSchema), controller.crear);
+
+// ── Rutas con parámetro /:id (SIEMPRE al final) ──────────────────────────────
+router.get('/:id', authOpcional, controller.obtener);
 router.put('/:id', auth, uploadFotoPost, validate(actualizarPostSchema), controller.actualizar);
 router.delete('/:id', auth, controller.eliminar);
 router.post('/:id/like', auth, controller.toggleLike);

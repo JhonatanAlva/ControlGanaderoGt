@@ -1,36 +1,36 @@
 /**
  * middlewares/validate.middleware.js
- * Valida req.body, req.params o req.query contra un schema de Zod.
- * Si la validación falla, lanza un 422 con los errores detallados.
- *
- * Uso en routes:
- *   router.post('/', validate(crearAnimalSchema), animalesController.crear);
+ * Compatible con Express 5 y multipart/form-data (multer).
  */
 
-"use strict";
+'use strict';
 
-const AppError = require("../utils/AppError");
+const AppError = require('../utils/AppError');
 
-/**
- * @param {import('zod').ZodSchema} schema  - Schema de Zod
- * @param {'body'|'params'|'query'} source  - De dónde tomar los datos
- */
-const validate =
-  (schema, source = "body") =>
-  (req, res, next) => {
-    const result = schema.safeParse(req[source]);
+const validate = (schema, source = 'body') => (req, res, next) => {
+  if (!schema) return next();
 
-    if (!result.success) {
-      const errors = result.error.errors.map((e) => ({
-        field: e.path.join("."),
-        message: e.message,
-      }));
-      return next(AppError.unprocessable("Error de validación.", errors));
-    }
+  // req.body puede ser undefined si multer aún no procesó — usar objeto vacío
+  const data = req[source] ?? {};
 
-    // Reemplaza el source con los datos limpios (coerciones de Zod aplicadas)
+  const result = schema.safeParse(data);
+
+  if (!result.success) {
+    const errors = result.error.errors.map((e) => ({
+      field:   e.path.join('.'),
+      message: e.message,
+    }));
+    return next(AppError.unprocessable('Error de validación.', errors));
+  }
+
+  // Express 5: req.query es read-only
+  if (source === 'query') {
+    req.validatedQuery = result.data;
+  } else {
     req[source] = result.data;
-    next();
-  };
+  }
+
+  next();
+};
 
 module.exports = validate;
