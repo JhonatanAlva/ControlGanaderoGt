@@ -34,6 +34,9 @@ const PUBLIC_FIELDS = [
     'cria_id', 'cria_arete', 'cria_sexo', 'peso_nacimiento',
     'asistencia_veterinaria', 'costo_veterinario',
     'notas', 'creado_en', 'actualizado_en',
+    // Campos calculados/joined que agrega partos.repository.js para listados
+    'madre_arete', 'madre_nombre', 'padre_arete_ref', 'cria_arete_ref',
+    'finca_nombre', 'estado_parto', 'dias_restantes',
 ];
 
 const toPublic = (row) => {

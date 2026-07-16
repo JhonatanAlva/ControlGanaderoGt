@@ -29,6 +29,8 @@ const PUBLIC_FIELDS = [
     'dosis', 'via_aplicacion', 'veterinario',
     'costo', 'notas',
     'creado_en', 'actualizado_en',
+    // Campos calculados/joined que agrega vacunas.repository.js para listados
+    'numero_arete', 'animal_nombre', 'finca_nombre', 'urgencia',
 ];
 
 const toPublic = (row) => {
