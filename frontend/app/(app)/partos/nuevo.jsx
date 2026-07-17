@@ -9,6 +9,7 @@ import { TIPOS_REPRODUCCION } from '../../../constants/enums';
 import ScreenHeader from '../../../components/ScreenHeader';
 import FormInput from '../../../components/FormInput';
 import ChipPicker from '../../../components/ChipPicker';
+import AnimalPicker from '../../../components/AnimalPicker';
 import PrimaryButton from '../../../components/PrimaryButton';
 
 export default function NuevoPartoScreen() {
@@ -21,14 +22,21 @@ export default function NuevoPartoScreen() {
     select: (res) => res.data.data,
   });
 
+  const { data: machos } = useQuery({
+    queryKey: ['animales', { estado: 'Activo', sexo: 'Macho' }],
+    queryFn: () => animalesService.listar({ estado: 'Activo', sexo: 'Macho', limit: 100 }),
+    select: (res) => res.data.data,
+  });
+
   const [form, setForm] = useState({
-    madre_id: '', padre_arete: '', tipo_reproduccion: '', fecha_servicio: '', notas: '',
+    madre_id: '', padre_id: '', padre_arete: '', tipo_reproduccion: '', fecha_servicio: '', notas: '',
   });
   const set = (campo, valor) => setForm((f) => ({ ...f, [campo]: valor }));
 
   const mutation = useMutation({
     mutationFn: () => partosService.registrarServicio({
       madre_id: form.madre_id,
+      padre_id: form.padre_id || undefined,
       padre_arete: form.padre_arete.trim() || undefined,
       tipo_reproduccion: form.tipo_reproduccion,
       fecha_servicio: form.fecha_servicio,
@@ -51,22 +59,17 @@ export default function NuevoPartoScreen() {
     mutation.mutate();
   };
 
-  const madreSeleccionada = hembras?.find((a) => a.id === form.madre_id);
-
   return (
     <ScrollView style={{ flex: 1, backgroundColor: '#fff' }} contentContainerStyle={{ paddingBottom: 40 }}>
       <ScreenHeader title="Nuevo Servicio" />
 
       <View style={{ padding: 24 }}>
         {hembras?.length > 0 ? (
-          <ChipPicker
+          <AnimalPicker
             label="Madre *"
-            options={hembras.map((a) => a.nombre || a.numero_arete)}
-            value={madreSeleccionada?.nombre || madreSeleccionada?.numero_arete || ''}
-            onChange={(label) => {
-              const a = hembras.find((x) => (x.nombre || x.numero_arete) === label);
-              set('madre_id', a ? a.id : '');
-            }}
+            animales={hembras}
+            value={form.madre_id}
+            onChange={(id) => set('madre_id', id)}
           />
         ) : (
           <FormInput label="Madre" editable={false} value="No tienes hembras activas registradas" />
@@ -85,6 +88,14 @@ export default function NuevoPartoScreen() {
           value={form.fecha_servicio}
           onChangeText={(v) => set('fecha_servicio', v)}
         />
+        {machos?.length > 0 && (
+          <AnimalPicker
+            label="Padre (si está en el sistema)"
+            animales={machos}
+            value={form.padre_id}
+            onChange={(id) => set('padre_id', id)}
+          />
+        )}
         <FormInput
           label="Arete del padre (si no está en el sistema)"
           value={form.padre_arete}

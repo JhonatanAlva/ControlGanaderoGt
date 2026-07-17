@@ -1,32 +1,41 @@
 // app/_layout.jsx
 import { useEffect } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { ActivityIndicator, View } from 'react-native';
 import useAuthStore from '../stores/authStore';
+import useOnboardingStore from '../stores/onboardingStore';
+import { queryClient } from '../services/queryClient';
+import { initDb } from '../db/database';
+import { iniciarSyncAutomatico, procesarCola } from '../offline/syncManager';
 import { COLORS } from '../constants/colors';
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: { retry: 1, staleTime: 1000 * 60 * 5 },
-  },
-});
 
 function AuthGuard() {
   const { usuario, cargando, inicializar } = useAuthStore();
+  const { visto: onboardingVisto, cargando: onboardingCargando, inicializar: inicializarOnboarding } = useOnboardingStore();
   const router   = useRouter();
   const segments = useSegments();
 
-  useEffect(() => { inicializar(); }, []);
+  useEffect(() => {
+    inicializar();
+    inicializarOnboarding();
+    initDb().then(() => {
+      iniciarSyncAutomatico();
+      procesarCola(); // por si quedaron cambios pendientes de una sesión anterior
+    });
+  }, []);
 
   useEffect(() => {
-    if (cargando) return;
+    if (cargando || onboardingCargando) return;
     const enAuth = segments[0] === '(auth)';
-    if (!usuario && !enAuth) router.replace('/(auth)/login');
-    else if (usuario && enAuth) router.replace('/(app)');
-  }, [usuario, cargando, segments]);
+    if (!usuario && !enAuth) {
+      router.replace('/(auth)/login');
+    } else if (usuario && enAuth) {
+      router.replace(onboardingVisto ? '/(app)' : '/(app)/onboarding');
+    }
+  }, [usuario, cargando, onboardingVisto, onboardingCargando, segments]);
 
-  if (cargando) {
+  if (cargando || onboardingCargando) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
         <ActivityIndicator size="large" color={COLORS.primary} />

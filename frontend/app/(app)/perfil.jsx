@@ -96,7 +96,7 @@ export default function PerfilScreen() {
         <Text style={styles.sub}>{usuario.email}</Text>
         <PrimaryButton
           label={usuario.plan === 'pro' ? 'Ver planes' : 'Actualizar a Pro'}
-          variant="outline"
+          variant="outlinePrimary"
           onPress={() => router.push('/(app)/planes')}
         />
       </View>
@@ -131,6 +131,10 @@ export default function PerfilScreen() {
           onChangeText={(v) => setPassword('confirmar', v)}
         />
         <PrimaryButton label="Cambiar contraseña" onPress={handleCambiarPassword} loading={passwordMutation.isPending} />
+      </View>
+
+      <View style={styles.section}>
+        <PrimaryButton label="Ver tour de la app" variant="outlinePrimary" onPress={() => router.push('/(app)/onboarding')} />
       </View>
 
       <View style={[styles.section, { borderBottomWidth: 0 }]}>

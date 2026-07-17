@@ -31,7 +31,7 @@ export const RESULTADOS_PARTO = ['Vivo', 'Muerto', 'Gemelar', 'Aborto'];
 export const CATEGORIAS_GASTO = [
   'Alimentación', 'Veterinario', 'Vacunas', 'Medicamentos',
   'Mano de obra', 'Infraestructura', 'Transporte',
-  'Compra de animales', 'Otros',
+  'Compra de animales', 'Venta de animales', 'Otros',
 ];
 
 export const TIPOS_MOVIMIENTO = ['Gasto', 'Ingreso'];

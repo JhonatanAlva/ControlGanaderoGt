@@ -1,17 +1,20 @@
 // app/(app)/gastos/index.jsx
 import { useState, useCallback } from 'react';
 import {
-  View, Text, ScrollView, RefreshControl,
+  View, Text, ScrollView, RefreshControl, Alert,
   TouchableOpacity, ActivityIndicator, StyleSheet,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { gastosService } from '../../../services/gastosService';
+import useAuthStore from '../../../stores/authStore';
 import { COLORS } from '../../../constants/colors';
 import { formatQ, formatFecha } from '../../../utils/format';
+import { exportarPDF, htmlReporteGastos } from '../../../utils/exportPdf';
 import ScreenHeader from '../../../components/ScreenHeader';
 import ChipPicker from '../../../components/ChipPicker';
 import BarList from '../../../components/BarList';
+import PrimaryButton from '../../../components/PrimaryButton';
 import { CATEGORIAS_GASTO, TIPOS_MOVIMIENTO } from '../../../constants/enums';
 
 const MES_LABEL = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
@@ -19,10 +22,12 @@ const MES_LABEL = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep'
 export default function GastosScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const anio = new Date().getFullYear();
+  const { usuario } = useAuthStore();
 
+  const [anio, setAnio] = useState(new Date().getFullYear());
   const [tipo, setTipo] = useState('');
   const [categoria, setCategoria] = useState('');
+  const [exportando, setExportando] = useState(false);
 
   const resumenQuery = useQuery({
     queryKey: ['gastos', 'resumen-mensual', anio],
@@ -68,6 +73,25 @@ export default function GastosScreen() {
     .filter((c) => c.tipo === 'Gasto')
     .map((c) => ({ label: c.categoria, value: parseFloat(c.total), valueLabel: formatQ(c.total) }));
 
+  const handleExportar = async () => {
+    if (!totales) return;
+    setExportando(true);
+    try {
+      const html = htmlReporteGastos({
+        usuarioNombre: usuario?.nombre || '',
+        anio,
+        meses,
+        totales,
+        movimientos,
+      });
+      await exportarPDF(html, `Gastos_${anio}`);
+    } catch {
+      Alert.alert('Error', 'No se pudo generar el PDF.');
+    } finally {
+      setExportando(false);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <ScreenHeader
@@ -81,7 +105,15 @@ export default function GastosScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} />}
       >
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Balance {anio}</Text>
+          <View style={styles.anioSelector}>
+            <TouchableOpacity onPress={() => setAnio((a) => a - 1)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <Text style={styles.anioArrow}>←</Text>
+            </TouchableOpacity>
+            <Text style={[styles.sectionTitle, { marginBottom: 0 }]}>Balance {anio}</Text>
+            <TouchableOpacity onPress={() => setAnio((a) => a + 1)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <Text style={styles.anioArrow}>→</Text>
+            </TouchableOpacity>
+          </View>
           {resumenQuery.isLoading && <ActivityIndicator color={COLORS.primary} />}
           {totales && (
             <View style={styles.totalesRow}>
@@ -95,6 +127,14 @@ export default function GastosScreen() {
             </View>
           )}
           {barsMensual.length > 0 && <BarList items={barsMensual} />}
+          {totales && (
+            <PrimaryButton
+              label="Exportar PDF"
+              variant="outlinePrimary"
+              loading={exportando}
+              onPress={handleExportar}
+            />
+          )}
         </View>
 
         {barsCategoria.length > 0 && (
@@ -159,6 +199,11 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.gray50 },
   section: { padding: 20, borderBottomWidth: 8, borderBottomColor: COLORS.gray50, backgroundColor: '#fff' },
   sectionTitle: { fontSize: 15, fontWeight: 'bold', color: COLORS.black, marginBottom: 12 },
+  anioSelector: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 20, marginBottom: 12,
+  },
+  anioArrow: { fontSize: 20, color: COLORS.primary, fontWeight: 'bold', paddingHorizontal: 8 },
   totalesRow: { flexDirection: 'row', gap: 10, marginBottom: 16 },
   totalCard: { flex: 1, backgroundColor: COLORS.gray50, borderRadius: 10, padding: 10, borderWidth: 1, borderColor: COLORS.gray200 },
   totalValue: { fontSize: 14, fontWeight: 'bold' },

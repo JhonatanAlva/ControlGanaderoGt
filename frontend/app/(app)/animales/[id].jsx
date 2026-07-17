@@ -1,12 +1,13 @@
 // app/(app)/animales/[id].jsx
 import { useState } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity,
+  View, Text, ScrollView, TouchableOpacity, Image,
   ActivityIndicator, Alert, StyleSheet,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { animalesService } from '../../../services/animalesService';
+import * as animalesRepo from '../../../offline/animalesRepo';
 import { COLORS } from '../../../constants/colors';
 import { formatQ, formatFecha } from '../../../utils/format';
 import ScreenHeader from '../../../components/ScreenHeader';
@@ -27,16 +28,18 @@ export default function DetalleAnimalScreen() {
   const { id } = useLocalSearchParams();
   const queryClient = useQueryClient();
 
+  const esLocal = id.startsWith('local_');
+
   const { data: animal, isLoading } = useQuery({
     queryKey: ['animales', id],
-    queryFn: () => animalesService.obtener(id),
-    select: (res) => res.data.data.animal,
+    queryFn: () => animalesRepo.obtener(id),
   });
 
   const { data: pesos } = useQuery({
     queryKey: ['animales', id, 'pesos'],
     queryFn: () => animalesService.historialPesos(id),
     select: (res) => res.data.data.pesos,
+    enabled: !esLocal,
   });
 
   const invalidarTodo = async () => {
@@ -51,7 +54,7 @@ export default function DetalleAnimalScreen() {
   const [precioVenta, setPrecioVenta] = useState('');
 
   const estadoMutation = useMutation({
-    mutationFn: () => animalesService.cambiarEstado(id, {
+    mutationFn: () => animalesRepo.cambiarEstado(id, {
       estado: nuevoEstado,
       ...(nuevoEstado === 'Vendido' && {
         fecha_venta: fechaVenta,
@@ -80,7 +83,7 @@ export default function DetalleAnimalScreen() {
   const [fechaPeso, setFechaPeso] = useState('');
 
   const pesoMutation = useMutation({
-    mutationFn: () => animalesService.registrarPeso(id, {
+    mutationFn: () => animalesRepo.registrarPeso(id, {
       peso: parseFloat(nuevoPeso),
       fecha: fechaPeso,
     }),
@@ -101,10 +104,20 @@ export default function DetalleAnimalScreen() {
     pesoMutation.mutate();
   };
 
-  if (isLoading || !animal) {
+  if (isLoading) {
     return (
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
         <ActivityIndicator size="large" color={COLORS.primary} />
+      </View>
+    );
+  }
+
+  if (!animal) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', padding: 24 }]}>
+        <Text style={{ color: COLORS.gray500, textAlign: 'center' }}>
+          No se encontró este animal en la caché local. Conéctate a internet e intenta de nuevo.
+        </Text>
       </View>
     );
   }
@@ -118,6 +131,9 @@ export default function DetalleAnimalScreen() {
       />
 
       <View style={styles.section}>
+        {animal.foto_url && (
+          <Image source={{ uri: animal.foto_url }} style={styles.foto} />
+        )}
         <View style={styles.rowBetween}>
           <Text style={styles.h1}>{animal.nombre || animal.numero_arete}</Text>
           <Badge text={animal.estado} color={ESTADO_COLOR[animal.estado] || COLORS.gray500} />
@@ -212,7 +228,11 @@ export default function DetalleAnimalScreen() {
         </View>
         <PrimaryButton label="Registrar peso" loading={pesoMutation.isPending} onPress={handleRegistrarPeso} />
 
-        {pesos?.length > 0 ? pesos.map((p) => (
+        {esLocal ? (
+          <Text style={styles.emptyText}>
+            Este animal aún no se sincroniza con el servidor — el historial de pesos estará disponible después.
+          </Text>
+        ) : pesos?.length > 0 ? pesos.map((p) => (
           <View key={p.id} style={styles.pesoRow}>
             <Text style={styles.pesoValue}>{p.peso} lb</Text>
             <Text style={styles.sub}>{formatFecha(p.fecha)}</Text>
@@ -243,6 +263,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.gray50 },
   section: { padding: 20, borderBottomWidth: 8, borderBottomColor: COLORS.gray50, backgroundColor: '#fff' },
   sectionTitle: { fontSize: 15, fontWeight: 'bold', color: COLORS.black, marginBottom: 12 },
+  foto: { width: '100%', height: 200, borderRadius: 14, marginBottom: 16, backgroundColor: COLORS.gray100 },
   rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   h1: { fontSize: 20, fontWeight: 'bold', color: COLORS.black },
   sub: { fontSize: 13, color: COLORS.gray600, marginTop: 4 },

@@ -2,6 +2,7 @@
 import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
 import { authService } from '../services/authService';
+import { queryClient } from '../services/queryClient';
 
 const useAuthStore = create((set) => ({
   usuario:  null,
@@ -54,6 +55,8 @@ const useAuthStore = create((set) => ({
 
   logout: async () => {
     await SecureStore.deleteItemAsync('auth_token');
+    await SecureStore.deleteItemAsync('finca_activa_id');
+    queryClient.clear(); // evita que el caché de un usuario se filtre al siguiente
     set({ usuario: null, token: null });
   },
 

@@ -11,6 +11,7 @@ import useFincaStore from '../../../stores/fincaStore';
 import ScreenHeader from '../../../components/ScreenHeader';
 import FormInput from '../../../components/FormInput';
 import ChipPicker from '../../../components/ChipPicker';
+import AnimalPicker from '../../../components/AnimalPicker';
 import PrimaryButton from '../../../components/PrimaryButton';
 
 export default function NuevoGastoScreen() {
@@ -65,8 +66,6 @@ export default function NuevoGastoScreen() {
     mutation.mutate();
   };
 
-  const animalSeleccionado = animales?.find((a) => a.id === form.animal_id);
-
   return (
     <ScrollView style={{ flex: 1, backgroundColor: '#fff' }} contentContainerStyle={{ paddingBottom: 40 }}>
       <ScreenHeader title="Nuevo Movimiento" />
@@ -106,14 +105,11 @@ export default function NuevoGastoScreen() {
         )}
 
         {animales?.length > 0 && (
-          <ChipPicker
+          <AnimalPicker
             label="Animal (opcional)"
-            options={animales.map((a) => a.nombre || a.numero_arete)}
-            value={animalSeleccionado?.nombre || animalSeleccionado?.numero_arete || ''}
-            onChange={(label) => {
-              const a = animales.find((x) => (x.nombre || x.numero_arete) === label);
-              set('animal_id', a ? a.id : '');
-            }}
+            animales={animales}
+            value={form.animal_id}
+            onChange={(id) => set('animal_id', id)}
           />
         )}
 

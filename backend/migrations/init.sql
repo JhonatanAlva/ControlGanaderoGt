@@ -48,7 +48,7 @@ CREATE TYPE resultado_parto AS ENUM ('Vivo', 'Muerto', 'Gemelar', 'Aborto');
 CREATE TYPE categoria_gasto AS ENUM (
   'Alimentación', 'Veterinario', 'Vacunas', 'Medicamentos',
   'Mano de obra', 'Infraestructura', 'Transporte',
-  'Compra de animales', 'Otros'
+  'Compra de animales', 'Venta de animales', 'Otros'
 );
 
 CREATE TYPE tipo_movimiento AS ENUM ('Gasto', 'Ingreso');

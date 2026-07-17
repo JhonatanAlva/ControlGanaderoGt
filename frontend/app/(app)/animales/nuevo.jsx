@@ -3,19 +3,22 @@ import { useState } from 'react';
 import { ScrollView, Alert, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { animalesService } from '../../../services/animalesService';
+import * as animalesRepo from '../../../offline/animalesRepo';
 import { fincasService } from '../../../services/fincasService';
 import useFincaStore from '../../../stores/fincaStore';
 import { RAZAS, SEXOS, TIPOS_ANIMAL, PROPOSITOS } from '../../../constants/enums';
 import ScreenHeader from '../../../components/ScreenHeader';
 import FormInput from '../../../components/FormInput';
 import ChipPicker from '../../../components/ChipPicker';
+import AnimalPicker from '../../../components/AnimalPicker';
 import PrimaryButton from '../../../components/PrimaryButton';
+import PhotoPicker from '../../../components/PhotoPicker';
 
 export default function NuevoAnimalScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { fincaActivaId } = useFincaStore();
+  const [foto, setFoto] = useState(null);
 
   const { data: fincas } = useQuery({
     queryKey: ['fincas'],
@@ -23,16 +26,26 @@ export default function NuevoAnimalScreen() {
     select: (res) => res.data.data.fincas,
   });
 
+  const { data: hembras } = useQuery({
+    queryKey: ['animales', { estado: 'Activo', sexo: 'Hembra' }],
+    queryFn: () => animalesRepo.listar({ estado: 'Activo', sexo: 'Hembra', limit: 100 }),
+  });
+
+  const { data: machos } = useQuery({
+    queryKey: ['animales', { estado: 'Activo', sexo: 'Macho' }],
+    queryFn: () => animalesRepo.listar({ estado: 'Activo', sexo: 'Macho', limit: 100 }),
+  });
+
   const [form, setForm] = useState({
     numero_arete: '', nombre: '', raza: '', sexo: '', tipo: '', proposito: '',
     finca_id: fincaActivaId || '', fecha_nacimiento: '',
     peso_actual: '', peso_compra: '', precio_compra: '',
-    madre_arete: '', padre_arete: '', procedencia: '', notas: '',
+    madre_id: '', padre_id: '', madre_arete: '', padre_arete: '', procedencia: '', notas: '',
   });
   const set = (campo, valor) => setForm((f) => ({ ...f, [campo]: valor }));
 
   const mutation = useMutation({
-    mutationFn: () => animalesService.crear({
+    mutationFn: () => animalesRepo.crear({
       numero_arete: form.numero_arete.trim(),
       nombre: form.nombre.trim() || undefined,
       raza: form.raza,
@@ -44,15 +57,24 @@ export default function NuevoAnimalScreen() {
       peso_actual: form.peso_actual ? parseFloat(form.peso_actual) : undefined,
       peso_compra: form.peso_compra ? parseFloat(form.peso_compra) : undefined,
       precio_compra: form.precio_compra ? parseFloat(form.precio_compra) : undefined,
+      madre_id: form.madre_id || undefined,
+      padre_id: form.padre_id || undefined,
       madre_arete: form.madre_arete.trim() || undefined,
       padre_arete: form.padre_arete.trim() || undefined,
       procedencia: form.procedencia.trim() || undefined,
       notas: form.notas.trim() || undefined,
-    }),
-    onSuccess: async () => {
+    }, foto),
+    onSuccess: async (animal) => {
       await queryClient.invalidateQueries({ queryKey: ['animales'] });
       await queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      Alert.alert('Listo', 'Animal registrado.', [{ text: 'OK', onPress: () => router.back() }]);
+      const enCola = animal.id.startsWith('local_');
+      Alert.alert(
+        'Listo',
+        enCola
+          ? 'Sin conexión: el animal se guardó en el celular y se enviará al servidor cuando vuelva la señal.'
+          : 'Animal registrado.',
+        [{ text: 'OK', onPress: () => router.back() }],
+      );
     },
     onError: (err) => Alert.alert('Error', err.mensaje || 'No se pudo registrar el animal.'),
   });
@@ -70,6 +92,8 @@ export default function NuevoAnimalScreen() {
       <ScreenHeader title="Nuevo Animal" />
 
       <View style={{ padding: 24 }}>
+        <PhotoPicker asset={foto} onChange={setFoto} />
+
         <FormInput
           label="Número de arete *"
           placeholder="A-102"
@@ -127,11 +151,27 @@ export default function NuevoAnimalScreen() {
           value={form.precio_compra}
           onChangeText={(v) => set('precio_compra', v.replace(/[^0-9.]/g, ''))}
         />
+        {hembras?.length > 0 && (
+          <AnimalPicker
+            label="Madre (si está en el sistema)"
+            animales={hembras}
+            value={form.madre_id}
+            onChange={(id) => set('madre_id', id)}
+          />
+        )}
         <FormInput
           label="Arete de la madre (si no está en el sistema)"
           value={form.madre_arete}
           onChangeText={(v) => set('madre_arete', v)}
         />
+        {machos?.length > 0 && (
+          <AnimalPicker
+            label="Padre (si está en el sistema)"
+            animales={machos}
+            value={form.padre_id}
+            onChange={(id) => set('padre_id', id)}
+          />
+        )}
         <FormInput
           label="Arete del padre (si no está en el sistema)"
           value={form.padre_arete}
