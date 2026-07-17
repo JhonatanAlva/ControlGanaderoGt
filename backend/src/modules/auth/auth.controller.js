@@ -39,4 +39,29 @@ const logout = (req, res) => {
   ok(res, null, "Sesión cerrada. Descarta el token en el cliente.");
 };
 
-module.exports = { registro, login, me, logout };
+const actualizarPerfil = async (req, res, next) => {
+  try {
+    const usuario = await service.actualizarPerfil(req.user.id, req.body);
+    ok(res, { usuario }, "Perfil actualizado.");
+  } catch (err) {
+    next(err);
+  }
+};
+
+const cambiarPassword = async (req, res, next) => {
+  try {
+    await service.cambiarPassword(req.user.id, req.body);
+    ok(res, null, "Contraseña actualizada.");
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = {
+  registro,
+  login,
+  me,
+  logout,
+  actualizarPerfil,
+  cambiarPassword,
+};

@@ -5,12 +5,24 @@ import {
   ActivityIndicator, TouchableOpacity, StyleSheet,
 } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'expo-router';
 import useAuthStore from '../../stores/authStore';
 import { COLORS } from '../../constants/colors';
 import { animalesService } from '../../services/animalesService';
 import { vacunasService } from '../../services/vacunasService';
 import { partosService } from '../../services/partosService';
 import { gastosService } from '../../services/gastosService';
+import { formatQ, formatFecha } from '../../utils/format';
+
+const MODULOS = [
+  { label: 'Fincas', icon: '🏡', href: '/(app)/fincas' },
+  { label: 'Animales', icon: '🐄', href: '/(app)/animales' },
+  { label: 'Vacunas', icon: '💉', href: '/(app)/vacunas' },
+  { label: 'Partos', icon: '🐣', href: '/(app)/partos' },
+  { label: 'Gastos', icon: '💰', href: '/(app)/gastos' },
+  { label: 'Comunidad', icon: '💬', href: '/(app)/comunidad' },
+  { label: 'Perfil', icon: '👤', href: '/(app)/perfil' },
+];
 
 const URGENCIA_COLOR = {
   Vencida: COLORS.danger,
@@ -25,16 +37,9 @@ const ESTADO_PARTO_COLOR = {
   Programado: COLORS.gray500,
 };
 
-const formatQ = (n) => `Q${Number(n || 0).toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-
-const formatFecha = (fecha) => {
-  if (!fecha) return '—';
-  const [anio, mes, dia] = fecha.slice(0, 10).split('-');
-  return `${dia}/${mes}/${anio}`;
-};
-
 export default function DashboardScreen() {
   const { usuario, logout } = useAuthStore();
+  const router = useRouter();
   const queryClient = useQueryClient();
   const anio = new Date().getFullYear();
 
@@ -94,6 +99,15 @@ export default function DashboardScreen() {
           </Text>
         </View>
       )}
+
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.modulosRow}>
+        {MODULOS.map((m) => (
+          <TouchableOpacity key={m.href} style={styles.moduloBtn} onPress={() => router.push(m.href)}>
+            <Text style={styles.moduloIcon}>{m.icon}</Text>
+            <Text style={styles.moduloLabel}>{m.label}</Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
 
       <View style={styles.grid}>
         <StatCard
@@ -222,6 +236,21 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   logoutText: { color: '#fff', fontWeight: '600', fontSize: 13 },
+
+  modulosRow: { marginTop: 16, paddingLeft: 16 },
+  moduloBtn: {
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginRight: 10,
+    borderWidth: 1,
+    borderColor: COLORS.gray200,
+    minWidth: 78,
+  },
+  moduloIcon: { fontSize: 22 },
+  moduloLabel: { fontSize: 11, color: COLORS.gray600, marginTop: 4, fontWeight: '600' },
 
   errorBanner: {
     backgroundColor: '#fdecea',

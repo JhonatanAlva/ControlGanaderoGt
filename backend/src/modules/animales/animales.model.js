@@ -57,6 +57,10 @@ const PUBLIC_FIELDS = [
   "notas",
   "creado_en",
   "actualizado_en",
+  // Campos calculados/joined que agrega animales.repository.js para listados
+  "finca_nombre",
+  "madre_arete_ref",
+  "padre_arete_ref",
 ];
 
 const toPublic = (row) => {

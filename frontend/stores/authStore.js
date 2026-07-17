@@ -57,6 +57,8 @@ const useAuthStore = create((set) => ({
     set({ usuario: null, token: null });
   },
 
+  actualizarUsuario: (datos) => set((state) => ({ usuario: { ...state.usuario, ...datos } })),
+
   limpiarError: () => set({ error: null }),
 }));
 

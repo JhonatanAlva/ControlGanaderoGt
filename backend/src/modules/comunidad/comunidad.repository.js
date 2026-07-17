@@ -31,10 +31,15 @@ const findAll = async (usuarioId, filtros = {}) => {
     const total = parseInt(countResult.rows[0].total, 10);
 
     // Si hay usuario autenticado, indica si ya dio like
-    const likeJoin = usuarioId
-        ? `LEFT JOIN comunidad_likes cl ON cl.post_id = p.id AND cl.usuario_id = '${usuarioId}'`
-        : '';
-    const likeSelect = usuarioId ? ', (cl.usuario_id IS NOT NULL) AS yo_di_like' : '';
+    const rowValues = [...values];
+    let likeJoin = '';
+    let likeSelect = '';
+    if (usuarioId) {
+        likeJoin = `LEFT JOIN comunidad_likes cl ON cl.post_id = p.id AND cl.usuario_id = $${idx}`;
+        likeSelect = ', (cl.usuario_id IS NOT NULL) AS yo_di_like';
+        rowValues.push(usuarioId);
+        idx++;
+    }
 
     const rows = await query(
         `SELECT
@@ -48,17 +53,21 @@ const findAll = async (usuarioId, filtros = {}) => {
      WHERE ${whereClause}
      ORDER BY p.creado_en DESC
      LIMIT $${idx} OFFSET $${idx + 1}`,
-        [...values, limit, offset]
+        [...rowValues, limit, offset]
     );
 
     return { rows: rows.rows, total, page, limit };
 };
 
 const findById = async (id, usuarioId) => {
-    const likeJoin = usuarioId
-        ? `LEFT JOIN comunidad_likes cl ON cl.post_id = p.id AND cl.usuario_id = '${usuarioId}'`
-        : '';
-    const likeSelect = usuarioId ? ', (cl.usuario_id IS NOT NULL) AS yo_di_like' : '';
+    const values = [id];
+    let likeJoin = '';
+    let likeSelect = '';
+    if (usuarioId) {
+        likeJoin = `LEFT JOIN comunidad_likes cl ON cl.post_id = p.id AND cl.usuario_id = $2`;
+        likeSelect = ', (cl.usuario_id IS NOT NULL) AS yo_di_like';
+        values.push(usuarioId);
+    }
 
     const result = await query(
         `SELECT
@@ -70,7 +79,7 @@ const findById = async (id, usuarioId) => {
      JOIN usuarios u ON u.id = p.autor_id
      ${likeJoin}
      WHERE p.id = $1 AND p.activo = true`,
-        [id]
+        values
     );
     return result.rows[0] || null;
 };

@@ -8,13 +8,7 @@ import {
 import { Link } from 'expo-router';
 import useAuthStore from '../../stores/authStore';
 import { COLORS } from '../../constants/colors';
-
-const REGIONES = [
-  'Alta Verapaz','Baja Verapaz','Chiquimula','El Progreso','Escuintla',
-  'Guatemala','Huehuetenango','Izabal','Jalapa','Jutiapa','Petén',
-  'Quetzaltenango','Quiché','Retalhuleu','Sacatepéquez','San Marcos',
-  'Santa Rosa','Sololá','Suchitepéquez','Totonicapán','Zacapa',
-];
+import { REGIONES_GUATEMALA as REGIONES } from '../../constants/enums';
 
 export default function RegistroScreen() {
   const [form, setForm] = useState({

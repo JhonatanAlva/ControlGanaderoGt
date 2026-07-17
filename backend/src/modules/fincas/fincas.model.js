@@ -27,6 +27,8 @@ const PUBLIC_FIELDS = [
   "activa",
   "creado_en",
   "actualizado_en",
+  // Campo calculado que agrega fincas.repository.js
+  "total_animales",
 ];
 
 const toPublic = (row) => {

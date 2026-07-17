@@ -56,4 +56,31 @@ const getMe = async (id) => {
   return usuario;
 };
 
-module.exports = { registro, login, getMe };
+const actualizarPerfil = async (id, datos) => {
+  const actualizado = await repo.update(id, datos);
+  if (!actualizado) throw AppError.notFound("Usuario no encontrado.");
+  return toPublic(actualizado);
+};
+
+const cambiarPassword = async (id, { passwordActual, passwordNueva }) => {
+  const usuario = await repo.findByIdConPassword(id);
+  if (!usuario) throw AppError.notFound("Usuario no encontrado.");
+
+  const passwordValida = await bcrypt.compare(
+    passwordActual,
+    usuario.password_hash,
+  );
+  if (!passwordValida)
+    throw AppError.unauthorized("La contraseña actual es incorrecta.");
+
+  const nuevoHash = await bcrypt.hash(passwordNueva, SALT_ROUNDS);
+  await repo.updatePassword(id, nuevoHash);
+};
+
+module.exports = {
+  registro,
+  login,
+  getMe,
+  actualizarPerfil,
+  cambiarPassword,
+};

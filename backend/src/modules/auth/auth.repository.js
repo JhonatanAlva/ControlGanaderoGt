@@ -21,6 +21,11 @@ const findById = async (id) => {
   return result.rows[0] || null;
 };
 
+const findByIdConPassword = async (id) => {
+  const result = await query("SELECT * FROM usuarios WHERE id = $1", [id]);
+  return result.rows[0] || null;
+};
+
 const create = async ({
   nombre,
   email,
@@ -45,4 +50,34 @@ const create = async ({
   return result.rows[0];
 };
 
-module.exports = { findByEmail, findById, create };
+const update = async (id, campos) => {
+  const keys = Object.keys(campos).filter((k) => campos[k] !== undefined);
+  if (keys.length === 0) return findById(id);
+
+  const sets = keys.map((k, i) => `${k} = $${i + 2}`);
+  const values = keys.map((k) => campos[k]);
+
+  const result = await query(
+    `UPDATE usuarios SET ${sets.join(", ")}
+     WHERE id = $1
+     RETURNING id, nombre, email, telefono, region, whatsapp, foto_url, plan, activo, creado_en, actualizado_en`,
+    [id, ...values],
+  );
+  return result.rows[0] || null;
+};
+
+const updatePassword = async (id, passwordHash) => {
+  await query("UPDATE usuarios SET password_hash = $2 WHERE id = $1", [
+    id,
+    passwordHash,
+  ]);
+};
+
+module.exports = {
+  findByEmail,
+  findById,
+  findByIdConPassword,
+  create,
+  update,
+  updatePassword,
+};

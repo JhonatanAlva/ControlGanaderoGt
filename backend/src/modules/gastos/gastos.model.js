@@ -26,6 +26,8 @@ const PUBLIC_FIELDS = [
     'monto', 'fecha',
     'proveedor', 'factura', 'notas',
     'creado_en', 'actualizado_en',
+    // Campos calculados/joined que agrega gastos.repository.js para listados
+    'finca_nombre', 'numero_arete', 'animal_nombre',
 ];
 
 const toPublic = (row) => {

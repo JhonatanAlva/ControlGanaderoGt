@@ -28,6 +28,8 @@ const PUBLIC_FIELDS = [
     'foto_url', 'contacto_whatsapp',
     'likes', 'activo',
     'creado_en', 'actualizado_en',
+    // Campos calculados/joined que agrega comunidad.repository.js para listados
+    'autor_nombre', 'autor_region', 'yo_di_like',
 ];
 
 const toPublic = (row) => {
